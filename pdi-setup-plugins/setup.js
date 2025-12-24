@@ -2,8 +2,10 @@
 * Installs a list of plugins and applications.
 *
 * V1
-* @author Maik Skoddow
-* V2 (ref https://kubbs.substack.com/p/programmatic-pdi-setup for usage) 
+* Maik Skoddow - ref https://www.linkedin.com/posts/maik-skoddow_servicenow-activity-7160527557782630400-vP99?utm_source=share&utm_medium=member_desktop&rcm=ACoAAACoorEBNNilWj5jyyWNAyIPtQx_feK7JU0
+* V2
+* Sophie Kubitz - ref https://kubbs.substack.com/p/programmatic-pdi-setup for usage
+
 * @param {Array} arrToBeInstalled
 *    List of plugin IDs or application scope to be installed
 * @param {Boolean} dryRun
