@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  SSMDocument: 
+    Type: AWS::SSM::Document
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Service Graph AWS - aws:runShellScript
+        mainSteps:
+          - action: aws:runShellScript
+            name: runShellScript
+            inputs:
+              timeoutSeconds: 3600
+              runCommand:
+                - "echo '####SG-AWS-06-02-2022####'"
+                - "hostname | sed 's/^/#HOST#/'"
+                - "dmidecode system | grep -E '(Manufacturer|Product Name|Serial Number)'| sed 's/^/#DMI#/'"
+                - "ps awwxo pid,ppid,command | sed 's/^/#PS#/'"
+                - "ss -anpt | sed 's/^/#SS#/'" 
+                - "netstat -anpt | sed 's/^/#NETSTAT#/'"
+                - "grep -E '(model name|vendor_id|cpu MHz|cpu cores)' /proc/cpuinfo | sed 's/^/#CPU#/'"
+                - "awk '/MemTotal/ {print $2}' /proc/meminfo | sed 's/^/#RAM-KB#/'"
+                - "lsblk -dn | grep -v '^loop' | sed 's/^/#DISK#/'"
+                - "lscpu | grep 'Vendor'| uniq | sed 's/^/#CPU-VENDOR#/'"
+                - "lscpu | grep 'Model name:'| uniq | sed 's/^/#CPU-NAME#/'"
+                - "lscpu | grep 'CPU(s):'| uniq | sed 's/^/#CPU-COUNT#/'"
+                - "lscpu | grep 'Core(s)'| uniq | sed 's/^/#CPU-CORES#/'"
+                - "lscpu | grep 'Thread'| uniq | sed 's/^/#CPU-THREAD#/'"
+                - "mysql -V | awk '{print $1, $2, $3, $4, $5}' | cut -f1 -d ',' | sed 's/^/#DB-SERVICES#mysql#version#/'"                
+                - "httpd -v | sed 's/^/#APACHE#/'"
+                - "apache2 -v | sed 's/^/#APACHE2DEB#/'"
+                - "nginx -v 2>&1 | sed 's/^/#NGINX#/'"
+                - "output=$(ps awwxo command | grep tomcat | grep -v grep)"
+                - "echo \"$output\" | while IFS= read -r process; do"
+                - "    DETECTED_JAVA_PATH=$(echo \"$process\" | awk '{print $1}' | sed 's#/bin/java##')"
+                - "    CATALINA_HOME=${process#*-Dcatalina.home=}"
+                - "    CATALINA_HOME=${CATALINA_HOME%% *}"
+                - "    CATALINA_SH=$(find -L \"$CATALINA_HOME\" -name catalina.sh -type f -print 2>/dev/null)"
+                - "    if [ -n \"$CATALINA_SH\" ]; then"
+                - "        tomcat_version_line=$(sh \"$CATALINA_SH\" version | grep \"Server version\")"
+                - "        if [ -n \"$tomcat_version_line\" ]; then"
+                - "            echo \"TOMCAT-VERSION: $CATALINA_HOME @@ $tomcat_version_line\""
+                - "        else"
+                - "            export JAVA_HOME=\"$DETECTED_JAVA_PATH\""
+                - "            tomcat_version_line=$(sh \"$CATALINA_SH\" version | grep \"Server version\")"
+                - "            if [ -n \"$tomcat_version_line\" ]; then"
+                - "                echo \"TOMCAT-VERSION: $CATALINA_HOME @@ $tomcat_version_line\""
+                - "            else"
+                - "                echo \"Tomcat-error: version still not found after setting JAVA_HOME=$JAVA_HOME\""
+                - "            fi"
+                - "        fi"
+                - "    else"
+                - "        echo \"Tomcat-error: Failed to find Tomcat version. Either tomcat is not running or catalina.sh not found in $CATALINA_HOME\""
+                - "    fi"
+                - "done"
+      DocumentType: Command
+      Name: SG-AWS-RunShellScript
+      VersionName: 1.0

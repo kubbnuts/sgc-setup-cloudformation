@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  SSMDocument: 
+    Type: AWS::SSM::Document
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: 'Service Graph AWS - kubectl script to get EKS data in to CMDB'
+        parameters:
+          eksName:
+            type: String
+            description: EKS Name         
+        mainSteps:
+          - action: aws:runShellScript
+            name: runShellScript
+            inputs:
+              timeoutSeconds: 3600
+              runCommand:
+                - " #!/bin/bash                                                                                        "
+                - " function getNameSpaces()                                                                           "
+                - " {                                                                                                  "
+                - "   namespaces=$(kubectl get --no-headers namespace | tr -s '  ' | cut -d ' ' -f 1)                  "
+                - "   IFS=$' ' read -d '' -r -a k8namesspaces <<< $namespaces                                          "
+                - " }                                                                                                  "
+                - " function execKubectlNamespacesCommands()                                                           "
+                - " {                                                                                                  "
+                - "   kubectl get $1 -n $2 -o $3 --no-headers |sed 's/^/###/' | sed \"s/###/###$4### $5  /g\"          "
+                - " }                                                                                                  "
+                - " function execKubectlGetNamespaces()                                                                "
+                - " {                                                                                                  "
+                - "   kubectl get $1 -o $2 --no-headers |sed 's/^/###/' | sed \"s/###/###$3### $4  /g\"                "
+                - " }                                                                                                  "
+                - " function executeCommands()                                                                         "
+                - " {                                                                                                  "
+                - "    kubectl config use-context $1                                                                   "
+                - "    getNameSpaces                                                                                   "
+                - "    for((n=0; n < ${#k8namesspaces[@]}; n++))                                                       "
+                - "        do                                                                                          "
+                - "          echo ${k8namesspaces[n]} | sed 's/^/#NAMESPACES#/'                                        "
+                - "        done                                                                                        "
+                - "    echo '--##########--'                                                                           "
+                - "    execKubectlGetNamespaces namespace json NAMESPACES-JSON                                         "
+                - "    echo '--##########--'                                                                           "
+                - "    for((n=0; n < ${#k8namesspaces[@]}; n++))                                                       "
+                - "        do                                                                                          "
+                - "          execKubectlNamespacesCommands pods ${k8namesspaces[n]} json PODS-JSON                     "
+                - "          echo '##########'                                                                         "
+                - "        done                                                                                        "
+                - "    echo '--##########--'                                                                           "
+                - "    for((n=0; n < ${#k8namesspaces[@]}; n++))                                                       "
+                - "        do                                                                                          "
+                - "          execKubectlNamespacesCommands deployments ${k8namesspaces[n]} json DEPLOYMENTS-JSON       "
+                - "          echo '##########'                                                                         "
+                - "        done                                                                                        "
+                - "    echo '--##########--'                                                                           "
+                - "    for((n=0; n < ${#k8namesspaces[@]}; n++))                                                       "
+                - "        do                                                                                          "
+                - "          execKubectlNamespacesCommands services ${k8namesspaces[n]} json SERVICES-JSON             "
+                - "          echo '##########'                                                                         "
+                - "        done                                                                                        "
+                - "    echo '--##########--'                                                                           "
+                - "    for((n=0; n < ${#k8namesspaces[@]}; n++))                                                       "
+                - "        do                                                                                          "
+                - "          execKubectlNamespacesCommands replicaset ${k8namesspaces[n]} json REPLICASET-JSON         "
+                - "          echo '##########'                                                                         "
+                - "        done                                                                                        "
+                - "    echo '--##########--'                                                                           "
+                - "    for((n=0; n < ${#k8namesspaces[@]}; n++))                                                       "
+                - "        do                                                                                          "
+                - "          execKubectlNamespacesCommands daemonset ${k8namesspaces[n]} json DAEMONSET-JSON           "
+                - "          echo '##########'                                                                         "
+                - "        done                                                                                        "
+                - "    echo '--##########--'                                                                           "
+                - "    kubectl get nodes -o json | sed 's/^/#NODES-JSON#/'                                             "
+                - " }                                                                                                  "
+                - " export KUBECONFIG=/root/.kube/config                                                               "
+                - " REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)                         "
+                - " AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)                  "
+                - " INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)                          "
+                - " HOSTNAME=$(curl -s http://169.254.169.254/latest/meta-data/hostname)                               "
+                - " echo 'REGION='$REGION                                                                              "
+                - " echo 'AZ='$AZ                                                                                      "
+                - " echo 'INSTANCEID='$INSTANCEID                                                                      "
+                - " echo 'HOSTNAME='$HOSTNAME                                                                          "
+                - " echo '##########'                                                                                  "
+                - " executeCommands {{ eksName }}                                                                      "
+              onSuccess: exit
+      DocumentType: Command
+      Name: SG-AWS-RunKubeCtlShellScript
+      VersionName: 1.0

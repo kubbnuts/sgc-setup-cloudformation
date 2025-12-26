@@ -1,0 +1,27 @@
+ Date            | SG-AWS Version | Short Description 
+--------------------------------------------------------------------------------------------------------------------------------------------------
+Mar 13, 2023    | 2.0            | Added back SnowDesignatedAccountAccessRoleInManagementAccount.yml
+                |                | Added iam:CreateAccessKey, iam:DeleteAccessKey to SnowOrganizationAccountAccessRole
+---------------------------------------------------------------------------------------------------------------------------------------------------  
+Jun 2, 2023     | 2.1            | Modified .yml to make it work for gov cloud
+                |                |
+---------------------------------------------------------------------------------------------------------------------------------------------------  
+Jun 28, 2023    | 2.2            | Added Cloudformation scripts for EKS Support: SG-AWS-RunKubeCtlEKSNamesShellScript, SG-AWS-RunKubeCtlShellScript
+                |                | Modified SSMSendCommand scripts to return hostname
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Aug 29, 2023    | 2.3            | Scoped IAM permissions for SnowOrganizationAccountAccessRole IAM role
+                |                | Added MySql support for DB Services in SSM documents
+--------------------------------------------------------------------------------------------------------------------------------------------------- 
+Dec 18, 2023    | 2.4            | Added shell commands for Deep Discovery of CPU data
+                |                | Added IAM permissions to access Organizational Unit data
+		|                | Modified AWS-SystemsManager-AutomationExecutionRole
+--------------------------------------------------------------------------------------------------------------------------------------------------- 
+Sep 11, 2024    | 2.8            | Enhanced EKS support by capturing namespace details during SSM command execution
+                |                | Improved execution flow for SG-AWS-RunKubeCtlShellScript to better handle Kubernetes namespaces
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Oct 29, 2024    | 2.9            | Enhanced software rocognition by adding Tomcat version to script
+                |                | Improved execution SG-AWS-RunShellScript-Setup by getting more detail for resources like Tomcat
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Feb 25, 2025    | 2.10           | Enhanced Key Rotation, adding rights needed for key rotation
+                |                | Add IAM permission to create and delete key in CreateServiceNowUser
+---------------------------------------------------------------------------------------------------------------------------------------------------
