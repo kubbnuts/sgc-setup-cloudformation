@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This CF Template creates SnowOrganizationAccountAccessRole in Management account.
+  ServiceNow user is created in delegated member account.
+  ServiceNow user needs to get details of organization and list of accounts associated to organization.
+  Note: This script needs to be executed in Management Account
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Member Account Details
+        Parameters:
+          - MEMBERACTNBR
+    ParameterLabels:
+      MEMBERACTNBR:
+        default: Enter  Member Account Id where ServiceNow user is created
+Parameters:
+  MEMBERACTNBR:
+    Type: String
+    MaxLength: 12
+    MinLength: 12
+Resources:
+  SnowOrganizationAccountAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SnowOrganizationAccountAccessRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref MEMBERACTNBR
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: SnowOrganizationAccountAccessPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeImages
+                  - ec2:DescribeRegions
+                  - ec2:DescribeInstances
+                  - organizations:DescribeOrganization
+                  - organizations:ListAccounts
+                  - organizations:ListRoots
+                  - organizations:ListAccountsForParent
+                  - organizations:ListOrganizationalUnitsForParent
+                  - organizations:DescribeOrganizationalUnit
+                  - organizations:ListTagsForResource
+                Resource: '*'
+Outputs:
+  ServiceNowUserRoleARN:
+    Description: ARN of ServiceNow OrganizationAccountAccessRole Role
+    Value: !GetAtt 
+      - SnowOrganizationAccountAccessRole
+      - Arn

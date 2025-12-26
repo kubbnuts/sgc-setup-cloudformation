@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This CF Template creates AmazonSSMRoleForInstances in account.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: S3 Bucket Details
+        Parameters:
+          - S3Bucket
+    ParameterLabels:
+      S3Bucket:
+        default: S3 Bucket Name
+Parameters:
+  S3Bucket:
+    Type: String
+    Description: >-
+      Enter the S3 bucket name you have created/chosen to publish SendCommand
+      output.
+Resources:
+  AmazonSSMRoleForInstancesRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AmazonSSMForInstancesRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: SSMSendCommand
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement: 
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:PutObjectAcl
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${S3Bucket}/*
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+  AmazonSSMRoleForInstancesProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: AmazonSSMForInstancesProfile
+      Path: /
+      Roles:
+        - !Ref AmazonSSMRoleForInstancesRole

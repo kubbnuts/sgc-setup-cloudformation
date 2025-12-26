@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  SSMDocument: 
+    Type: AWS::SSM::Document
+    Properties:
+      Content:
+        schemaVersion: "2.2"
+        description: Service Graph AWS - kubectl script to get EKS Cluster Names
+        mainSteps:
+          - action: aws:runShellScript
+            name: runShellScript
+            inputs:
+              timeoutSeconds: 3600
+              runCommand:
+                - " #!/bin/bash                                                                                        "
+                - " function getClusters()                                                                             "
+                - " {                                                                                                  "
+                - "   names=$(aws eks list-clusters --region ${REGION}| tail -n +3 | head -n -2 | tr -s ' ' | cut -d ' ' -f 2 | cut -d '\"' -f 2) "
+                - "   IFS=$' ' read -d '' -r -a clusters <<< $names                                                    "
+                - " }                                                                                                  "
+                - " function getContexts()                                                                             "
+                - " {                                                                                                  "
+                - "   names=$(kubectl config get-contexts --no-headers| tr -s ' ' | cut -d ' ' -f 2 )                  "
+                - "   IFS=$' ' read -d '' -r -a k8names <<< $names                                         "
+                - " }                                                                                       "
+                - " REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)              "
+                - " AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)       "
+                - " INSTANCEID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)               "
+                - " HOSTNAME=$(curl -s http://169.254.169.254/latest/meta-data/hostname)                    "
+                - " echo 'REGION='$REGION                                                                   "
+                - " echo 'AZ='$AZ                                                                           "
+                - " echo 'INSTANCEID='$INSTANCEID                                                           "
+                - " echo 'HOSTNAME='$HOSTNAME                                                               "
+                - " echo '##########'                                                                       "
+                - " getClusters                                                                             "
+                - " for ((n=0; n<${#clusters[@]}; n++));                                                    "
+                - "     do                                                                                  "
+                - "         echo ${clusters[$n]}  | sed 's/^/#EKS-NAME#/'                               "
+                - "     done                                                                                "
+                - " echo '##########'                                                                       "
+                - " for ((n=0; n<${#clusters[@]}; n++));                                                    "
+                - "     do                                                                                  "
+                - "         aws eks --region $REGION update-kubeconfig --name ${clusters[$n]}               "
+                - "     done                                                                                "
+                - " export KUBECONFIG=/root/.kube/config                                                    "
+                - " getContexts                                                                             "
+                - " echo '##########'                                                                       "
+                - " for ((n=0; n<${#k8names[@]}; n++));                                                     "
+                - "     do                                                                                  "
+                - "         echo ${k8names[$n]}   | sed 's/^/#EKS-ARN#/'                                   "
+                - "     done                                                                                "
+                - " echo '##########'                                                                       "
+                - " kubectl config view                                                                     "                                             
+              onSuccess: exit
+      DocumentType: Command
+      Name: SG-AWS-RunKubeCtlEKSNamesShellScript
+      VersionName: 1.0
