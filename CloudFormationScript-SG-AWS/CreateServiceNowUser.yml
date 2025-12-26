@@ -36,10 +36,10 @@ Parameters:
       3. Your custom role name
     Default: SnowOrganizationAccountAccessRole
 Resources:
-  SnowMemberAccountAccessPolicy:
+  SnowMemberAccountAccessPolicyv2:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: SnowMemberAccountAccessPolicy
+      ManagedPolicyName: SnowMemberAccountAccessPolicyv2
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -51,9 +51,9 @@ Resources:
     Properties:
       GroupName: SnowMemberAccountAccessGroup
       ManagedPolicyArns:
-        - !Ref SnowMemberAccountAccessPolicy
+        - !Ref SnowMemberAccountAccessPolicyv2
       Path: /
-    DependsOn: SnowMemberAccountAccessPolicy
+    DependsOn: SnowMemberAccountAccessPolicyv2
   SnowAccountAccessPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -84,7 +84,7 @@ Resources:
             Action:
               - iam:CreateAccessKey
               - iam:DeleteAccessKey
-            Resource: 'arm:${AWS::Partition}:iam::${AWS::AccountId}:user/${SNUserName}'
+            Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:user/${SNUserName}
       Groups:
         - !Ref SnowMemberAccountAccessGroup
   CreateServicenowUser:
